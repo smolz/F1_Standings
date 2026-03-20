@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F1 2026 Standings</title>
+<title>F1 Standings</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -32,6 +32,7 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    flex-wrap: wrap;
   }
   .logo {
     font-family: 'Barlow Condensed', sans-serif;
@@ -51,6 +52,23 @@
     padding: 4px 12px;
     letter-spacing: 1px;
   }
+  .year-select {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 28px 6px 12px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238888aa' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .year-select:focus { outline: none; border-color: var(--red); }
   .meta-info {
     margin-left: auto;
     font-size: 0.85rem;
@@ -143,7 +161,7 @@
   .wins-cell.has-win { color: var(--gold); }
   .bar-cell { width: 150px; }
   .bar-track { background: var(--border); border-radius: 2px; height: 4px; }
-  .bar-fill { height: 4px; border-radius: 2px; background: var(--red); }
+  .bar-fill { height: 4px; border-radius: 2px; }
   .team-color { width: 4px; height: 36px; border-radius: 2px; display: inline-block; margin-right: 10px; vertical-align: middle; }
   .loading { text-align: center; padding: 4rem; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 2px; font-size: 1.1rem; }
   .error { color: #ff6b6b; text-align: center; padding: 2rem; }
@@ -158,8 +176,9 @@
 <body>
 
 <header>
-  <div class="logo">F1 <span>2026</span></div>
-  <div class="season-badge">Standings</div>
+  <div class="logo">F1 <span>Standings</span></div>
+  <div class="season-badge">Season</div>
+  <select class="year-select" id="year-select" onchange="onYearChange()"></select>
   <div class="meta-info" id="header-meta">Loading...</div>
 </header>
 
@@ -215,6 +234,10 @@ const TEAM_COLORS = {
   sauber: '#52e252',
 };
 
+const CURRENT_YEAR = 2026;
+const MIN_YEAR = 2000;
+const WORKER = 'https://f1standing.iamsmolz.workers.dev';
+
 function teamColor(id) {
   return TEAM_COLORS[id] || '#888';
 }
@@ -233,17 +256,55 @@ function posCell(pos) {
   return '<span class="pos-num">' + pos + '</span>';
 }
 
-async function loadStandings() {
+function buildYearSelect() {
+  const sel = document.getElementById('year-select');
+  for (let y = CURRENT_YEAR; y >= MIN_YEAR; y--) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    sel.appendChild(opt);
+  }
+  sel.value = CURRENT_YEAR;
+}
+
+function onYearChange() {
+  loadStandings(document.getElementById('year-select').value);
+}
+
+function resetTables() {
+  document.getElementById('d-body').innerHTML = '';
+  document.getElementById('c-body').innerHTML = '';
+  document.getElementById('d-table').style.display = 'none';
+  document.getElementById('c-table').style.display = 'none';
+  document.getElementById('d-loading').style.display = 'block';
+  document.getElementById('d-loading').textContent = 'LOADING STANDINGS...';
+  document.getElementById('c-loading').style.display = 'block';
+  document.getElementById('c-loading').textContent = 'LOADING STANDINGS...';
+  document.getElementById('header-meta').textContent = 'Loading...';
+}
+
+async function loadStandings(year) {
+  resetTables();
   try {
     const [dRes, cRes] = await Promise.all([
-      fetch('https://f1standing.iamsmolz.workers.dev/api/drivers'),
-      fetch('https://f1standing.iamsmolz.workers.dev/api/constructors')
+      fetch(`${WORKER}/api/drivers?year=${year}`),
+      fetch(`${WORKER}/api/constructors?year=${year}`)
     ]);
     const dData = await dRes.json();
     const cData = await cRes.json();
 
-    const dList = dData.MRData.StandingsTable.StandingsLists[0];
-    const cList = cData.MRData.StandingsTable.StandingsLists[0];
+    const dLists = dData.MRData.StandingsTable.StandingsLists;
+    const cLists = cData.MRData.StandingsTable.StandingsLists;
+
+    if (!dLists || dLists.length === 0) {
+      document.getElementById('d-loading').innerHTML = '<div class="error">No data available for ' + year + '</div>';
+      document.getElementById('c-loading').innerHTML = '<div class="error">No data available for ' + year + '</div>';
+      document.getElementById('header-meta').textContent = year + ' — no data';
+      return;
+    }
+
+    const dList = dLists[0];
+    const cList = cLists[0];
 
     document.getElementById('header-meta').textContent =
       'Season ' + dList.season + ' · After Round ' + dList.round;
@@ -302,7 +363,8 @@ async function loadStandings() {
   }
 }
 
-loadStandings();
+buildYearSelect();
+loadStandings(CURRENT_YEAR);
 </script>
 </body>
 </html>

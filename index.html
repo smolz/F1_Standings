@@ -322,7 +322,7 @@ async function loadStandings(year) {
         <td>
           <span class="team-color" style="background:${color}"></span>
           <span class="driver-name">${d.Driver.familyName}</span>
-          <span class="driver-code">${d.Driver.code}</span>
+          ${d.Driver.code ? `<span class="driver-code">${d.Driver.code}</span>` : ''}
           <br><span style="padding-left:14px;font-size:0.78rem;color:var(--muted)">${d.Driver.givenName}</span>
         </td>
         <td class="team-name">${d.Constructors[0].name}</td>

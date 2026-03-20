@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 2026 Standings</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e8002d;
+    --dark: #15151e;
+    --mid: #1f1f2e;
+    --card: #252535;
+    --border: #333345;
+    --text: #f0f0f5;
+    --muted: #8888aa;
+    --gold: #ffd700;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--mid);
+    border-bottom: 3px solid var(--red);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--text); }
+  .season-badge {
+    background: var(--red);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 4px 12px;
+    letter-spacing: 1px;
+  }
+  .meta-info {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .tabs {
+    display: flex;
+    background: var(--mid);
+    padding: 0 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0.9rem 1.5rem;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--red); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .content { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th.r, td.r { text-align: right; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 0.85rem 1rem; font-size: 0.9rem; vertical-align: middle; }
+  .pos-cell { width: 50px; }
+  .pos-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--muted);
+  }
+  .medal { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.8rem; }
+  .gold { background: var(--gold); color: #333; }
+  .silver { background: var(--silver); color: #333; }
+  .bronze { background: var(--bronze); color: #fff; }
+  .driver-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+  .driver-code {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-left: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+  }
+  .team-name { color: var(--muted); font-size: 0.85rem; }
+  .pts-cell {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--text);
+  }
+  .wins-cell {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+  .wins-cell.has-win { color: var(--gold); }
+  .bar-cell { width: 150px; }
+  .bar-track { background: var(--border); border-radius: 2px; height: 4px; }
+  .bar-fill { height: 4px; border-radius: 2px; background: var(--red); }
+  .team-color { width: 4px; height: 36px; border-radius: 2px; display: inline-block; margin-right: 10px; vertical-align: middle; }
+  .loading { text-align: center; padding: 4rem; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 2px; font-size: 1.1rem; }
+  .error { color: #ff6b6b; text-align: center; padding: 2rem; }
+  .constructor-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">F1 <span>2026</span></div>
+  <div class="season-badge">Standings</div>
+  <div class="meta-info" id="header-meta">Loading...</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('drivers', this)">Drivers</button>
+  <button class="tab" onclick="switchTab('constructors', this)">Constructors</button>
+</div>
+
+<div class="content">
+  <div id="drivers" class="section active">
+    <div class="loading" id="d-loading">LOADING STANDINGS...</div>
+    <table id="d-table" style="display:none">
+      <thead><tr>
+        <th class="pos-cell">Pos</th>
+        <th>Driver</th>
+        <th>Team</th>
+        <th class="r">Wins</th>
+        <th class="r">Points</th>
+        <th class="bar-cell"></th>
+      </tr></thead>
+      <tbody id="d-body"></tbody>
+    </table>
+  </div>
+  <div id="constructors" class="section">
+    <div class="loading" id="c-loading">LOADING STANDINGS...</div>
+    <table id="c-table" style="display:none">
+      <thead><tr>
+        <th class="pos-cell">Pos</th>
+        <th>Constructor</th>
+        <th>Nationality</th>
+        <th class="r">Wins</th>
+        <th class="r">Points</th>
+        <th class="bar-cell"></th>
+      </tr></thead>
+      <tbody id="c-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const TEAM_COLORS = {
+  mercedes: '#00d2be',
+  ferrari: '#e8002d',
+  mclaren: '#ff8000',
+  red_bull: '#3671c6',
+  rb: '#6692ff',
+  alpine: '#ff87bc',
+  aston_martin: '#358c75',
+  williams: '#64c4ff',
+  haas: '#b6babd',
+  audi: '#e4d403',
+  cadillac: '#333399',
+  sauber: '#52e252',
+};
+
+function teamColor(id) {
+  return TEAM_COLORS[id] || '#888';
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function posCell(pos) {
+  if (pos === 1) return '<span class="medal gold">1</span>';
+  if (pos === 2) return '<span class="medal silver">2</span>';
+  if (pos === 3) return '<span class="medal bronze">3</span>';
+  return '<span class="pos-num">' + pos + '</span>';
+}
+
+async function loadStandings() {
+  try {
+    const [dRes, cRes] = await Promise.all([
+      fetch('https://f1standing.iamsmolz.workers.dev/api/drivers'),
+      fetch('https://f1standing.iamsmolz.workers.dev/api/constructors')
+    ]);
+    const dData = await dRes.json();
+    const cData = await cRes.json();
+
+    const dList = dData.MRData.StandingsTable.StandingsLists[0];
+    const cList = cData.MRData.StandingsTable.StandingsLists[0];
+
+    document.getElementById('header-meta').textContent =
+      'Season ' + dList.season + ' · After Round ' + dList.round;
+
+    // Drivers
+    const maxD = Math.max(...dList.DriverStandings.map(d => +d.points));
+    const dBody = document.getElementById('d-body');
+    dList.DriverStandings.forEach(d => {
+      const pts = +d.points;
+      const pct = maxD > 0 ? (pts / maxD * 100).toFixed(1) : 0;
+      const cid = d.Constructors[0].constructorId;
+      const color = teamColor(cid);
+      dBody.innerHTML += `<tr>
+        <td class="pos-cell">${posCell(+d.position)}</td>
+        <td>
+          <span class="team-color" style="background:${color}"></span>
+          <span class="driver-name">${d.Driver.familyName}</span>
+          <span class="driver-code">${d.Driver.code}</span>
+          <br><span style="padding-left:14px;font-size:0.78rem;color:var(--muted)">${d.Driver.givenName}</span>
+        </td>
+        <td class="team-name">${d.Constructors[0].name}</td>
+        <td class="r wins-cell ${+d.wins > 0 ? 'has-win' : ''}">${d.wins}</td>
+        <td class="r pts-cell">${pts}</td>
+        <td class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></td>
+      </tr>`;
+    });
+    document.getElementById('d-loading').style.display = 'none';
+    document.getElementById('d-table').style.display = 'table';
+
+    // Constructors
+    const maxC = Math.max(...cList.ConstructorStandings.map(c => +c.points));
+    const cBody = document.getElementById('c-body');
+    cList.ConstructorStandings.forEach(c => {
+      const pts = +c.points;
+      const pct = maxC > 0 ? (pts / maxC * 100).toFixed(1) : 0;
+      const cid = c.Constructor.constructorId;
+      const color = teamColor(cid);
+      cBody.innerHTML += `<tr>
+        <td class="pos-cell">${posCell(+c.position)}</td>
+        <td>
+          <span class="team-color" style="background:${color}"></span>
+          <span class="constructor-name">${c.Constructor.name}</span>
+        </td>
+        <td class="team-name">${c.Constructor.nationality}</td>
+        <td class="r wins-cell ${+c.wins > 0 ? 'has-win' : ''}">${c.wins}</td>
+        <td class="r pts-cell">${pts}</td>
+        <td class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></td>
+      </tr>`;
+    });
+    document.getElementById('c-loading').style.display = 'none';
+    document.getElementById('c-table').style.display = 'table';
+
+  } catch(e) {
+    document.getElementById('d-loading').innerHTML = '<div class="error">Failed to load: ' + e.message + '</div>';
+    document.getElementById('c-loading').innerHTML = '<div class="error">Failed to load: ' + e.message + '</div>';
+  }
+}
+
+loadStandings();
+</script>
+</body>
+</html>

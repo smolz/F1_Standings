@@ -250,10 +250,12 @@ function switchTab(id, btn) {
 }
 
 function posCell(pos) {
-  if (pos === 1) return '<span class="medal gold">1</span>';
-  if (pos === 2) return '<span class="medal silver">2</span>';
-  if (pos === 3) return '<span class="medal bronze">3</span>';
-  return '<span class="pos-num">' + pos + '</span>';
+  const n = +pos;
+  if (isNaN(n)) return '<span class="pos-num">—</span>';
+  if (n === 1) return '<span class="medal gold">1</span>';
+  if (n === 2) return '<span class="medal silver">2</span>';
+  if (n === 3) return '<span class="medal bronze">3</span>';
+  return '<span class="pos-num">' + n + '</span>';
 }
 
 function buildYearSelect() {
@@ -304,7 +306,7 @@ async function loadStandings(year) {
     }
 
     const dList = dLists[0];
-    const cList = cLists[0];
+    const cList = cLists && cLists.length > 0 ? cLists[0] : null;
 
     document.getElementById('header-meta').textContent =
       'Season ' + dList.season + ' · After Round ' + dList.round;
@@ -317,12 +319,12 @@ async function loadStandings(year) {
       const pct = maxD > 0 ? (pts / maxD * 100).toFixed(1) : 0;
       const cid = d.Constructors[0].constructorId;
       const color = teamColor(cid);
+      const code = d.Driver.code ? `<span class="driver-code">${d.Driver.code}</span>` : '';
       dBody.innerHTML += `<tr>
-        <td class="pos-cell">${posCell(+d.position)}</td>
+        <td class="pos-cell">${posCell(d.position)}</td>
         <td>
           <span class="team-color" style="background:${color}"></span>
-          <span class="driver-name">${d.Driver.familyName}</span>
-          ${d.Driver.code ? `<span class="driver-code">${d.Driver.code}</span>` : ''}
+          <span class="driver-name">${d.Driver.familyName}</span>${code}
           <br><span style="padding-left:14px;font-size:0.78rem;color:var(--muted)">${d.Driver.givenName}</span>
         </td>
         <td class="team-name">${d.Constructors[0].name}</td>
@@ -335,6 +337,10 @@ async function loadStandings(year) {
     document.getElementById('d-table').style.display = 'table';
 
     // Constructors
+    if (!cList) {
+      document.getElementById('c-loading').innerHTML = '<div class="error">No constructor data for ' + year + '</div>';
+      return;
+    }
     const maxC = Math.max(...cList.ConstructorStandings.map(c => +c.points));
     const cBody = document.getElementById('c-body');
     cList.ConstructorStandings.forEach(c => {
@@ -343,7 +349,7 @@ async function loadStandings(year) {
       const cid = c.Constructor.constructorId;
       const color = teamColor(cid);
       cBody.innerHTML += `<tr>
-        <td class="pos-cell">${posCell(+c.position)}</td>
+        <td class="pos-cell">${posCell(c.position)}</td>
         <td>
           <span class="team-color" style="background:${color}"></span>
           <span class="constructor-name">${c.Constructor.name}</span>
